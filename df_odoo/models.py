@@ -1,10 +1,10 @@
-from typing import Optional, TypeVar
+from typing import TypeVar, Union
 from urllib.parse import urlparse
 
-import odoorpc
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from odoorpc import ODOO
 
 M = TypeVar("M", bound=models.Model)
 
@@ -23,10 +23,10 @@ class OdooConnection(models.Model):
     )
     url = models.CharField(max_length=255)
 
-    def get_connection(self, url: Optional[str, None] = None) -> odoorpc.ODOO:
+    def get_connection(self, url: Union[str, None] = None) -> ODOO:
         if not self._rpc:
             odoo_url = urlparse(url or self.url)
-            self._rpc = odoorpc.ODOO(
+            self._rpc = ODOO(
                 host=odoo_url.hostname, port=odoo_url.port, protocol=odoo_url.scheme
             )
             self._rpc.login(

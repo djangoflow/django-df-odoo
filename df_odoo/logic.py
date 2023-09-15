@@ -5,12 +5,12 @@ from dataclasses import dataclass, field
 from itertools import chain
 from typing import Any, Callable, Dict, Optional, Union
 
-import odoorpc
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.base import ContentFile
 from django.db import models, transaction
 from django.db.models import CharField, TextField
+from odoorpc import ODOO
 from PIL import Image
 
 from df_odoo.models import (
@@ -332,7 +332,7 @@ def sync_model_image_records(
 
 
 def sync_single_model_from_django_to_odoo(
-    db: odoorpc.ODOO,
+    db: ODOO,
     company: Company,
     schema: OdooModelMapping,
     obj: Optional[models.Model, None] = None,
