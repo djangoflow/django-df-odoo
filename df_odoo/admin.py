@@ -1,4 +1,8 @@
+from typing import Any
+
 from django.contrib import admin
+from django.db.models.query import _QuerySet
+from django.http import HttpRequest
 
 from df_odoo.logic import sync_all_models_records, sync_all_models_to_odoo
 from df_odoo.models import OdooConnection, OdooRecord, OdooRecordImage
@@ -8,15 +12,22 @@ from df_odoo.models import OdooConnection, OdooRecord, OdooRecordImage
 class OdooConnectionAdmin(admin.ModelAdmin):
     list_display = ("company", "url")
 
-    def sync_all_models(self, request, queryset):
+    def sync_all_models(
+        self, request: HttpRequest, queryset: _QuerySet[Any, Any]
+    ) -> None:
         for connection in queryset:
             sync_all_models_records(connection)
 
-    def sync_models_to_odoo(self, request, queryset):
+    def sync_models_to_odoo(
+        self, request: HttpRequest, queryset: _QuerySet[Any, Any]
+    ) -> None:
         for connection in queryset:
             sync_all_models_to_odoo(connection)
 
-    actions = [sync_all_models, sync_models_to_odoo]
+    actions = (
+        sync_all_models,
+        sync_models_to_odoo,
+    )
 
 
 @admin.register(OdooRecord)

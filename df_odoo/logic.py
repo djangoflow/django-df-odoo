@@ -3,8 +3,9 @@ import hashlib
 import io
 from dataclasses import dataclass, field
 from itertools import chain
-from typing import Any, Callable, Union
+from typing import Any, Callable, Dict, Optional, Union
 
+import odoorpc
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.base import ContentFile
@@ -12,20 +13,26 @@ from django.db import models, transaction
 from django.db.models import CharField, TextField
 from PIL import Image
 
-from df_odoo.models import Company, OdooConnection, OdooRecord, OdooRecordImage
+from df_odoo.models import (
+    Company,
+    OdooConnection,
+    OdooRecord,
+    OdooRecordImage,
+)
 
 
-def get_model_from_str(model_str):
-    return apps.get_model(*model_str.split("."))
+def get_model_from_str(model_str: str) -> Any:
+    app_label, model_name = model_str.split(".")
+    return apps.get_model(app_label, model_name)
 
 
-def base64_to_sha256(base64_str):
+def base64_to_sha256(base64_str: str) -> str:
     bytes_data = base64.b64decode(base64_str)
     sha256_hash = hashlib.sha256(bytes_data).hexdigest()
     return sha256_hash
 
 
-def _format_value(field, value):
+def _format_value(field: str, value: str) -> str:
     if isinstance(field, (TextField, CharField)) and value is False:
         # Odoo returns False for empty strings
         return ""
@@ -145,7 +152,9 @@ class ProductPrice(OdooCompanyModelMixin):
     }"""
 
 
-def sync_model_records(connection: OdooConnection, schema: OdooModelMapping):
+def sync_model_records(
+    connection: OdooConnection, schema: OdooModelMapping
+) -> None:  # noqa: C901
     # TODO: delete all records that are not in odoo anymore
     db = connection.get_connection()
     django_model = get_model_from_str(schema.django_model)
@@ -194,7 +203,7 @@ def sync_model_records(connection: OdooConnection, schema: OdooModelMapping):
 
     for odoo_instance in odoo_instances:
         # Set regular fields
-        fields = {}
+        fields: Dict[str, Any] = {}
         for o_field, d_field in schema.flat_field_mapping.items():
             fields[d_field] = _format_value(
                 getattr(django_model, d_field).field, odoo_instance[o_field]
@@ -252,7 +261,9 @@ def sync_model_records(connection: OdooConnection, schema: OdooModelMapping):
                 getattr(django_instance, d_field).set(d_ids)
 
 
-def sync_model_image_records(connection: OdooConnection, schema: OdooModelMapping):
+def sync_model_image_records(
+    connection: OdooConnection, schema: OdooModelMapping
+) -> None:
     db = connection.get_connection()
     django_model = get_model_from_str(schema.django_model)
 
@@ -321,30 +332,30 @@ def sync_model_image_records(connection: OdooConnection, schema: OdooModelMappin
 
 
 def sync_single_model_from_django_to_odoo(
-    db,
-    company,
+    db: odoorpc.ODOO,
+    company: Company,
     schema: OdooModelMapping,
-    obj: models.Model = None,
-    raw_data: dict = None,
-):
+    obj: Optional[models.Model, None] = None,
+    raw_data: Optional[dict, None] = None,
+) -> Optional[str]:
     final_data = {}
     django_id = None
     if obj:
         django_id = obj.id
         # for default fields
         for o_field, d_field in schema.defaults.items():
-            if isinstance(d_field, Callable):
+            if callable(d_field):
                 final_data[o_field] = d_field(obj)
             else:
                 final_data[o_field] = d_field
 
         # for callable fields
         for o_field, d_field in schema.callable_mapping.items():
-            if isinstance(d_field, Callable):
+            if callable(d_field):
                 final_data[o_field] = d_field(obj)
 
         for o_field, d_field in schema.flat_field_mapping.items():
-            final_data[o_field] = _format_value(getattr(obj, d_field))
+            final_data[o_field] = _format_value(d_field, getattr(obj, d_field))
     else:
         django_id = raw_data.pop("django_id")
         final_data = raw_data
@@ -367,7 +378,9 @@ def sync_single_model_from_django_to_odoo(
         return odoo_id
 
 
-def sync_django_models_to_odoo(connection: OdooConnection, schema: OdooModelMapping):
+def sync_django_models_to_odoo(
+    connection: OdooConnection, schema: OdooModelMapping
+) -> None:
     django_model = get_model_from_str(schema.django_model)
     odoo_records = OdooRecord.objects.filter(
         company=connection.company,
@@ -386,7 +399,7 @@ def sync_django_models_to_odoo(connection: OdooConnection, schema: OdooModelMapp
         )
 
 
-def sync_all_models_records(connection: OdooConnection):
+def sync_all_models_records(connection: OdooConnection) -> None:
     mappings = [
         RESTAURANT_MAPPING,
         FLOOR_MAPPING,
@@ -403,7 +416,7 @@ def sync_all_models_records(connection: OdooConnection):
         sync_model_image_records(connection, schema)
 
 
-def sync_all_models_to_odoo(connection: OdooConnection):
+def sync_all_models_to_odoo(connection: OdooConnection) -> None:
     mappings = [
         CUSTOMER_MAPPING,
     ]
