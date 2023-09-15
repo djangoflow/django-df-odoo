@@ -2,6 +2,7 @@ django
 
 pytest
 odoorpc
+Pillow
 
 pytest-django
 

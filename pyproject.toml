@@ -27,6 +27,7 @@ urls = { homepage = "https://apexive.com/" }
 dependencies = [
     "django",
     "odoorpc",
+    "Pillow",
 ]
 
 [project.optional-dependencies]
