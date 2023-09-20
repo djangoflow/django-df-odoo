@@ -3,18 +3,19 @@ import hashlib
 import io
 from dataclasses import dataclass, field
 from itertools import chain
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any, Callable, Dict, Optional, Type, Union
 
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.base import ContentFile
-from django.db import models, transaction
+from django.db import transaction
 from django.db.models import CharField, TextField
 from odoorpc import ODOO
 from PIL import Image
 
 from df_odoo.models import (
     Company,
+    M,
     OdooConnection,
     OdooRecord,
     OdooRecordImage,
@@ -48,14 +49,14 @@ def _format_value(field: str, value: str) -> str:
 class OdooModelMapping:
     odoo_model: str
     django_model: str
-    flat_field_mapping: dict[str, str] = field(default_factory=dict)
-    fk_field_mapping: dict[str, str] = field(default_factory=dict)
-    m2m_field_mapping: dict[str, str] = field(default_factory=dict)
-    defaults: dict[str, Union[Callable[[Company], Any], Any]] = field(
+    flat_field_mapping: Dict[str, str] = field(default_factory=dict)
+    fk_field_mapping: Dict[str, str] = field(default_factory=dict)
+    m2m_field_mapping: Dict[str, str] = field(default_factory=dict)
+    defaults: Dict[str, Union[Callable[[Company], Any], Any]] = field(
         default_factory=dict
     )
-    image_field_mapping: dict[str, str] = field(default_factory=dict)
-    callable_mapping: dict[str, Callable] = field(default_factory=dict)
+    image_field_mapping: Dict[str, str] = field(default_factory=dict)
+    callable_mapping: Dict[str, Callable] = field(default_factory=dict)
 
 
 RESTAURANT_MAPPING = OdooModelMapping(
@@ -335,8 +336,8 @@ def sync_single_model_from_django_to_odoo(
     db: ODOO,
     company: Company,
     schema: OdooModelMapping,
-    obj: Optional[models.Model, None] = None,
-    raw_data: Optional[dict, None] = None,
+    obj: Optional[Type[M]] = None,
+    raw_data: Optional[Dict[str, Any]] = None,
 ) -> Optional[str]:
     final_data = {}
     django_id = None
@@ -345,7 +346,7 @@ def sync_single_model_from_django_to_odoo(
         # for default fields
         for o_field, d_field in schema.defaults.items():
             if callable(d_field):
-                final_data[o_field] = d_field(obj)
+                final_data[o_field] = d_field(obj)  # type: ignore[arg-type, union-attr]
             else:
                 final_data[o_field] = d_field
 
@@ -357,8 +358,8 @@ def sync_single_model_from_django_to_odoo(
         for o_field, d_field in schema.flat_field_mapping.items():
             final_data[o_field] = _format_value(d_field, getattr(obj, d_field))
     else:
-        django_id = raw_data.pop("django_id")
-        final_data = raw_data
+        django_id = raw_data.pop("django_id")  # type: ignore[arg-type, union-attr]
+        final_data = raw_data  # type: ignore[assignment]
 
     with transaction.atomic():
         odoo_id = db.execute(
