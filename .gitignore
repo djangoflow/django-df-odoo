@@ -50,7 +50,6 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
-.ruff_cache
 
 # Translations
 *.mo
@@ -131,3 +130,4 @@ dmypy.json
 
 
 .idea/
+.DS_Store

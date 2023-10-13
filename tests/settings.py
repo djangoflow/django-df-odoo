@@ -1,11 +1,26 @@
+from df_api_drf.defaults import (
+    DF_API_DRF_INSTALLED_APPS,
+)
+from df_api_drf.defaults import (
+    REST_FRAMEWORK as DEFAULT_REST_FRAMEWORK,
+)
+from df_api_drf.defaults import (
+    SPECTACULAR_SETTINGS as DEFAULT_SPECTACULAR_SETTINGS,
+)
+
+from df_odoo.defaults import DF_ODOO_INSTALLED_APPS
+
 DEBUG = True
 
 ROOT_URLCONF = "tests.urls"
-SECRET_KEY = "111111"  # noqa: S105
+SECRET_KEY = "111111"
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
+AUTH_USER_MODEL = "auth.User"
 
-USE_TZ = True
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -15,7 +30,8 @@ INSTALLED_APPS = [
     "django.contrib.sites",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "df_odoo",
+    *DF_API_DRF_INSTALLED_APPS,
+    *DF_ODOO_INSTALLED_APPS,
     "tests.test_app.apps.TestAppConfig",
 ]
 
@@ -74,3 +90,19 @@ LOGGING = {
 STATIC_URL = "/static/"
 
 ALLOWED_HOSTS = ["*"]
+
+REST_FRAMEWORK = {
+    **DEFAULT_REST_FRAMEWORK,
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.TokenAuthentication",
+    ],
+}
+
+SPECTACULAR_SETTINGS = {
+    **DEFAULT_SPECTACULAR_SETTINGS,
+}
+
+DF_ODOO = {
+    "TEST_SETTING": "test-replaced",
+}

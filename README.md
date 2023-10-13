@@ -1,6 +1,6 @@
-# Django DF Model Action
+# Django DF ODOO
 
-Module to sync the django and odoo models
+Module for integrating django and odoo
 
 ## Installation:
 
@@ -10,12 +10,37 @@ Module to sync the django and odoo models
 pip install django-df-odoo
 ```
 
-- Add the package to your INSTALLED_APPS
 
-```
+- Include default `INSTALLED_APPS` from `df_odoo.defaults` to your `settings.py`
+
+```python
+from df_odoo.defaults import DF_ODOO_INSTALLED_APPS
+
 INSTALLED_APPS = [
     ...
-    'df_odoo',
+    *DF_ODOO_INSTALLED_APPS,
     ...
 ]
+
+```
+
+
+## Development
+
+Installing dev requirements:
+
+```
+pip install -e .[test]
+```
+
+Installing pre-commit hook:
+
+```
+pre-commit install
+```
+
+Running tests:
+
+```
+pytest
 ```

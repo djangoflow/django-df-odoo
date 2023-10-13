@@ -1,7 +1,8 @@
 from django.apps import AppConfig
-from django.utils.translation import gettext_lazy as _
 
 
-class DFOdooConfig(AppConfig):
+class OdooConfig(AppConfig):
+    default_auto_field = "hashid_field.BigHashidAutoField"
     name = "df_odoo"
-    verbose_name = _("DjangoFlow Odoo")
+    api_path = "odoo/"
+    verbose_name = "Odoo Integration"
